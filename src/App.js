@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
 // --- SVG Icons ---
-// Using a simple brain icon for the logo as in the original code
 const BrainIcon = ({ className = "w-8 h-8" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v0A2.5 2.5 0 0 1 9.5 7h-3A2.5 2.5 0 0 1 4 4.5v0A2.5 2.5 0 0 1 6.5 2h3Z" />
@@ -41,6 +40,7 @@ function App() {
     // State management
     const [text, setText] = useState('');
     const [history, setHistory] = useState([]);
+    const [currentResult, setCurrentResult] = useState(null); // State for the latest result
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -72,9 +72,9 @@ function App() {
             return;
         }
 
-        // Set loading state and clear previous errors
         setLoading(true);
         setError('');
+        setCurrentResult(null); // Clear previous result before new analysis
 
         try {
             // API call - this part is unchanged as requested
@@ -90,22 +90,20 @@ function App() {
 
             const data = await response.json();
             
-            // Add new result to the beginning of the history array
-            const newHistoryEntry = {
+            const newEntry = {
                 ...data,
                 id: new Date().toISOString(), // Unique key for rendering
                 originalText: text, // Save the text that was analyzed
             };
-            setHistory(prevHistory => [newHistoryEntry, ...prevHistory]);
             
-            // Clear the text area for the next entry
-            setText('');
+            setCurrentResult(newEntry); // Set the new result to be displayed in detail
+            setHistory(prevHistory => [newEntry, ...prevHistory]); // Add to history
+            setText(''); // Clear the text area
 
         } catch (err) {
             console.error("Fetch error:", err);
             setError('Unable to connect to the analysis server. Please try again later.');
         } finally {
-            // Reset loading state
             setLoading(false);
         }
     };
@@ -125,21 +123,21 @@ function App() {
             {/* Main Content Area */}
             <main className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                {/* Left Column: Input Card */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 sm:p-8 h-full">
+                {/* Left Column: Input and Result */}
+                <div className="lg:col-span-2 flex flex-col gap-8">
+                    {/* Input Card */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 sm:p-8">
                         <h2 className="text-2xl font-semibold text-gray-700">How are you feeling today?</h2>
                         <p className="text-gray-500 mb-6">Share your thoughts and emotions. I'll help you understand and process them.</p>
                         
                         <textarea
-                            className="w-full h-48 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-200 placeholder-gray-400"
+                            className="w-full h-40 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-200 placeholder-gray-400"
                             placeholder="Type your feelings here... What's on your mind?"
                             value={text}
                             onChange={handleTextChange}
                             disabled={loading}
                         />
                         
-                        {/* Error Message Display */}
                         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                         
                         <button 
@@ -155,11 +153,25 @@ function App() {
                                     </svg>
                                     Analyzing...
                                 </>
-                            ) : (
-                                'Analyze My Feelings'
-                            )}
+                            ) : ( 'Analyze My Feelings' )}
                         </button>
                     </div>
+
+                    {/* Current Result Card */}
+                    {currentResult && (
+                         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 sm:p-8 animate-fade-in">
+                            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Your Latest Result</h2>
+                            <div className="flex items-center gap-4 mb-3">
+                                <span className="text-4xl">{emotionToEmoji[currentResult.prediction] || '😊'}</span>
+                                <h3 className="font-bold text-3xl capitalize text-gray-800">{currentResult.prediction}</h3>
+                            </div>
+                            <p className="text-gray-600 text-md italic mb-4">Based on: "{currentResult.originalText}"</p>
+                            <div className="border-t border-gray-200 pt-4">
+                                <h4 className="font-semibold text-gray-700 mb-2">Insights & Advice:</h4>
+                                <p className="text-gray-700 leading-relaxed">{currentResult.advice}</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Column: History Card */}
@@ -168,18 +180,19 @@ function App() {
                         <h2 className="text-2xl font-semibold text-gray-700 mb-4">Your History</h2>
                         <p className="text-gray-500 mb-6">{history.length} {history.length === 1 ? 'entry' : 'entries'} recorded</p>
                         
-                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
                             {history.length === 0 ? (
                                 <p className="text-gray-500 text-center py-10">No entries yet. Share your feelings to get started!</p>
                             ) : (
                                 history.map(entry => (
-                                    <div key={entry.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 animate-fade-in">
-                                        <div className="flex items-center gap-3 mb-2">
+                                    <div key={entry.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200 animate-fade-in-fast cursor-pointer hover:bg-indigo-50 transition-colors">
+                                        <div className="flex items-center gap-3">
                                             <span className="text-2xl">{emotionToEmoji[entry.prediction] || '😊'}</span>
-                                            <h3 className="font-bold text-lg capitalize text-gray-800">{entry.prediction}</h3>
+                                            <div className="flex-grow overflow-hidden">
+                                                <h3 className="font-semibold capitalize text-gray-800">{entry.prediction}</h3>
+                                                <p className="text-gray-500 text-sm truncate">"{entry.originalText}"</p>
+                                            </div>
                                         </div>
-                                        <p className="text-gray-600 text-sm italic mb-2">"{entry.originalText.substring(0, 50)}{entry.originalText.length > 50 ? '...' : ''}"</p>
-                                        <p className="text-gray-700">{entry.advice}</p>
                                     </div>
                                 ))
                             )}
@@ -195,11 +208,18 @@ function App() {
 const AnimationStyles = () => (
     <style>{`
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in {
             animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeInFast {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-fast {
+            animation: fadeInFast 0.4s ease-out forwards;
         }
     `}</style>
 );
@@ -211,6 +231,5 @@ const AppWrapper = () => (
         <App />
     </>
 );
-
 
 export default AppWrapper;
