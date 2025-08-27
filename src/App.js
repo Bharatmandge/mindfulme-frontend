@@ -40,29 +40,29 @@ function App() {
     // State management
     const [text, setText] = useState('');
     const [history, setHistory] = useState([]);
-    const [currentResult, setCurrentResult] = useState(null); // State for the latest result
+    const [currentResult, setCurrentResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isReady, setIsReady] = useState(false); // State to handle initial load
 
-    // Load Tailwind CSS via a script tag in the head
+    // This useEffect hook now only serves to remove the initial loading screen.
+    // The styles are loaded via the <TailwindStyles /> component below.
     useEffect(() => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.tailwindcss.com';
-        document.head.appendChild(script);
-        return () => {
-            document.head.removeChild(script);
-        };
+        // Use a short timeout to ensure the UI is stable before showing it.
+        const timer = setTimeout(() => {
+            setIsReady(true);
+        }, 200); // A brief delay to prevent any flicker
+        return () => clearTimeout(timer);
     }, []);
 
     // Handler for text area changes
     const handleTextChange = (e) => {
         setText(e.target.value);
-        if (error) setError(''); // Clear error on new input
+        if (error) setError('');
     };
 
     // Handler for the analysis button click
     const handleAnalyze = async () => {
-        // Basic validation
         if (!text.trim()) {
             setError('Please type your feelings before analyzing.');
             return;
@@ -74,10 +74,9 @@ function App() {
 
         setLoading(true);
         setError('');
-        setCurrentResult(null); // Clear previous result before new analysis
+        setCurrentResult(null);
 
         try {
-            // API call - this part is unchanged as requested
             const response = await fetch("https://mindfulme-3.onrender.com/predict", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -89,16 +88,15 @@ function App() {
             }
 
             const data = await response.json();
-            
             const newEntry = {
                 ...data,
-                id: new Date().toISOString(), // Unique key for rendering
-                originalText: text, // Save the text that was analyzed
+                id: new Date().toISOString(),
+                originalText: text,
             };
             
-            setCurrentResult(newEntry); // Set the new result to be displayed in detail
-            setHistory(prevHistory => [newEntry, ...prevHistory]); // Add to history
-            setText(''); // Clear the text area
+            setCurrentResult(newEntry);
+            setHistory(prevHistory => [newEntry, ...prevHistory]);
+            setText('');
 
         } catch (err) {
             console.error("Fetch error:", err);
@@ -107,10 +105,24 @@ function App() {
             setLoading(false);
         }
     };
+    
+    // Initial Loading Screen
+    if (!isReady) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100">
+                <div className="flex items-center gap-3 text-2xl font-semibold text-gray-600">
+                     <svg className="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading Mindful Me...
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-gradient-to-br from-indigo-50 to-purple-100 min-h-screen w-full font-sans text-gray-800 flex flex-col items-center p-4 sm:p-6 lg:p-8">
-            {/* Header Section */}
             <header className="text-center mb-8 w-full max-w-6xl">
                 <div className="flex items-center justify-center gap-3">
                     <BrainIcon className="w-9 h-9 text-indigo-500" />
@@ -120,12 +132,8 @@ function App() {
                 <p className="text-lg text-gray-600 mt-2">Your personal mental wellness companion</p>
             </header>
 
-            {/* Main Content Area */}
             <main className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
-                {/* Left Column: Input and Result */}
                 <div className="lg:col-span-2 flex flex-col gap-8">
-                    {/* Input Card */}
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 sm:p-8">
                         <h2 className="text-2xl font-semibold text-gray-700">How are you feeling today?</h2>
                         <p className="text-gray-500 mb-6">Share your thoughts and emotions. I'll help you understand and process them.</p>
@@ -157,7 +165,6 @@ function App() {
                         </button>
                     </div>
 
-                    {/* Current Result Card */}
                     {currentResult && (
                          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 sm:p-8 animate-fade-in">
                             <h2 className="text-2xl font-semibold text-gray-700 mb-4">Your Latest Result</h2>
@@ -174,7 +181,6 @@ function App() {
                     )}
                 </div>
 
-                {/* Right Column: History Card */}
                 <div className="lg:col-span-1">
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 sm:p-8 h-full">
                         <h2 className="text-2xl font-semibold text-gray-700 mb-4">Your History</h2>
@@ -204,9 +210,13 @@ function App() {
     );
 }
 
-// Add keyframes for animation in a style tag
-const AnimationStyles = () => (
+// --- Style and Animation Components ---
+
+// This component now loads Tailwind CSS directly, preventing the flash of unstyled content.
+const TailwindStyles = () => (
     <style>{`
+        @import url('https://cdn.tailwindcss.com');
+        /* Custom Keyframe Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -224,10 +234,10 @@ const AnimationStyles = () => (
     `}</style>
 );
 
-// We need to render AnimationStyles along with App
+// The main export now includes the styles and the app itself.
 const AppWrapper = () => (
     <>
-        <AnimationStyles />
+        <TailwindStyles />
         <App />
     </>
 );
