@@ -1,15 +1,37 @@
 import React, { useState } from 'react';
-import './index.css'; // <-- Tailwind should be imported globally here
+import './index.css'; // Tailwind CSS should be imported globally
 
-// SVGs
-const BrainIcon = ({ className = "w-8 h-8" }) => (/* same as before */);
-const HeartIcon = ({ className = "w-8 h-8" }) => (/* same as before */);
+// --- SVG Icons ---
+const BrainIcon = ({ className = "w-8 h-8" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v0A2.5 2.5 0 0 1 9.5 7h-3A2.5 2.5 0 0 1 4 4.5v0A2.5 2.5 0 0 1 6.5 2h3Z" />
+    <path d="M14.5 2A2.5 2.5 0 0 1 17 4.5v0A2.5 2.5 0 0 1 14.5 7h-3A2.5 2.5 0 0 1 9 4.5v0A2.5 2.5 0 0 1 11.5 2h3Z" />
+    <path d="M12 7.5c-2 0-2 2-4 2-2 0-2.5-2-4-2" />
+    <path d="M12 7.5c2 0 2 2 4 2 2 0 2.5-2 4-2" />
+    <path d="M4.5 9.5A2.5 2.5 0 0 1 7 12v0a2.5 2.5 0 0 1-2.5 2.5h-2A2.5 2.5 0 0 1 0 12v0A2.5 2.5 0 0 1 2.5 9.5h2Z" />
+    <path d="M19.5 9.5A2.5 2.5 0 0 1 22 12v0a2.5 2.5 0 0 1-2.5 2.5h-2a2.5 2.5 0 0 1-2.5-2.5v0A2.5 2.5 0 0 1 17.5 9.5h2Z" />
+    <path d="M9.5 14.5A2.5 2.5 0 0 1 12 17v0a2.5 2.5 0 0 1-2.5 2.5h-3A2.5 2.5 0 0 1 4 17v0a2.5 2.5 0 0 1 2.5-2.5h3Z" />
+    <path d="M14.5 14.5A2.5 2.5 0 0 1 17 17v0a2.5 2.5 0 0 1-2.5 2.5h-3a2.5 2.5 0 0 1-2.5-2.5v0A2.5 2.5 0 0 1 11.5 14.5h3Z" />
+    <path d="M12 14.5c-2 0-2 2-4 2-2 0-2.5-2-4-2" />
+    <path d="M12 14.5c2 0 2 2 4 2 2 0 2.5-2 4-2" />
+    <path d="M12 22.5c-2 0-2-2-4-2-2 0-2.5-2-4-2" />
+    <path d="M12 22.5c2 0 2 2 4 2 2 0 2.5-2 4-2" />
+  </svg>
+);
 
+const HeartIcon = ({ className = "w-8 h-8" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+  </svg>
+);
+
+// --- Emotion mapping ---
 const emotionToEmoji = {
   joy: '😄', sadness: '😢', anger: '😠',
   fear: '😨', love: '❤️', surprise: '😲', neutral: '😐'
 };
 
+// --- Main App ---
 function App() {
   const [text, setText] = useState('');
   const [history, setHistory] = useState([]);
@@ -57,7 +79,6 @@ function App() {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 sm:p-8">
             <h2 className="text-2xl font-semibold text-gray-700">How are you feeling today?</h2>
             <p className="text-gray-500 mb-6">Share your thoughts and emotions. I'll help you understand and process them.</p>
-            
             <textarea
               className="w-full h-40 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-200 placeholder-gray-400"
               placeholder="Type your feelings here..."
@@ -66,7 +87,6 @@ function App() {
               disabled={loading}
             />
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-            
             <button
               onClick={handleAnalyze}
               disabled={loading}
